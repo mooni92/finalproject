@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.bbbboone.mapper.MemberMapper">
+  <resultMap type="member" id="memberMap">
+		<id property="id" column="id"/>
+		<result property="id" column="id" />
+		<result property="pw" column="pw" />
+		<result property="name" column="name" />
+		<result property="nickname" column="nickname" />
+		<result property="email" column="email" />
+		<result property="phonenum" column="phonenum" />
+		<result property="grade" column="grade" />
+		<result property="studno" column="studno" />
+		<result property="enabled" column="enabled" />
+		<result property="wdate" column ="wdate"/>
+		<result property="comments" column="comments"/>
+		<collection property="auths" resultMap="authMap" />
+	</resultMap>
+	<resultMap type="auth" id="authMap">
+		<result property="id" column="id"/>
+		<result property="auth" column="auth"/>
+	</resultMap>
+  	<insert id="join">
+  		INSERT INTO TBL_MEMBER(ID,PW,NAME,NICKNAME,EMAIL,PHONENUM,GRADE,STUDNO)
+  		VALUES(#{id}, #{pw}, #{name}, #{nickname},#{email},#{phonenum},#{grade},#{studno})
+  	</insert>
+  	
+  	<update id="modify">
+  		UPDATE TBL_MEMBER SET
+  		PW = #{pw},
+  		NAME = #{name},
+  		NICKNAME =  #{nickname},
+  		EMAIL = #{email},
+  		PHONENUM = #{phonenum},
+  		STUDNO = #{studno}
+  		WHERE ID=#{id}
+  	</update>
+  	<select id="select" resultType="member">
+  		SELECT * FROM TBL_MEMBER WHERE STUDNO = #{studno}
+  	</select>
+  	<delete id="withdraw" >
+  	DELETE FROM TBL_MEMBER WHERE ID= #{id}
+  	</delete>
+  	<insert id="insertAuth">
+	INSERT INTO TBL_AUTH VALUES(#{id},#{auth})
+	</insert>
+	<select id="read" resultMap="memberMap">
+	SELECT *
+	FROM TBL_MEMBER
+	LEFT JOIN TBL_AUTH
+	USING(ID)
+	WHERE ID = #{id}
+	</select>
+	<!-- 아이디 중복검사 -->
+  	<select id="idCheck" resultType="int">
+  		select count(*) from TBL_MEMBER where ID = #{id}
+  	</select>
+  	<!-- 이메일 중복검사 -->
+  	<select id="emailCheck" resultType="int">
+  		select count(*) from TBL_MEMBER where EMAIL = #{email}
+  	</select>
+  	<!-- 이메일 중복검사 -->
+  	<select id="phoneCheck" resultType="int">
+  		select count(*) from TBL_MEMBER where PHONENUM = #{phonenum}
+  	</select>
+  	<!-- 학생번호 중복검사 -->
+  	<select id="studnoCheck" resultType="int">
+  		select count(*) from TBL_MEMBER where STUDNO = #{studno}
+  	</select>
+  		<!-- 학생번호 중복검사 -->
+  	<select id="studnoCheckAtstudent" resultType="int">
+  		select count(*) from TBL_STUDENT where STUDNO = #{studno}
+  	</select>
+	<select id="wIdcheck" resultType="int">
+		select count(*) from TBL_WITHDRAW where ID = #{id}
+	</select>
+	<resultMap type="member" id="memberMap2">
+		<id property="id" column="id" />
+		<result property="id" column="id" />
+		<result property="name" column="name" />
+		<result property="studno" column="studno" />
+		<collection property="enrollclasses" resultMap="enrollclassMap" />
+	</resultMap>
+	<resultMap type="enrollclass" id="enrollclassMap">
+		<result property="studno" column="studno" />
+		<result property="courno" column="courno" />
+		<result property="edate" column="edate" />
+	</resultMap>
+
+	<select id="getEnrollList" resultMap="memberMap2">
+		SELECT STUDNO, EDATE, ID, NAME
+		FROM TBL_MEMBER
+		JOIN TBL_ENROLLCLASS
+		USING(STUDNO)
+		WHERE COURNO = #{courno}
+	</select>
+	
+	<sql id="cri">
+		<trim prefix="(" suffix=") AND" prefixOverrides="OR">
+			<foreach collection="typeArr" item="type">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'I'.toString()">
+							ID LIKE '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'N'.toString()">
+							NAME LIKE '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'S'.toString()">
+							TO_CHAR(STUDNO) LIKE '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'G'.toString()">
+							GRADE LIKE '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="getList" resultType="member">
+		SELECT ID, STUDNO, NAME, NICKNAME, PHONENUM, EMAIL, GRADE
+		FROM TBL_MEMBER WHERE ID IS NOT NULL
+	</select>
+	
+	<select id="getListWithPaging" resultType="member">
+		SELECT RN, ID, STUDNO, NAME, NICKNAME, PHONENUM, EMAIL, GRADE
+		FROM
+		(
+		    SELECT
+			    /*+ INDEX_DESC(TBL_MEMBER PK_MEMBER)*/
+			    ROWNUM RN, ID, STUDNO, NAME, NICKNAME, PHONENUM, EMAIL, GRADE
+		    FROM 
+		    	TBL_MEMBER
+		    WHERE
+			<include refid="cri"/>
+		    	ROWNUM &lt;= #{pageNum} * #{amount}
+		)
+		WHERE RN > (#{pageNum}-1) * #{amount}
+	</select>
+	
+	<select id="getTotalCount" resultType="int">
+		SELECT COUNT(*) FROM TBL_MEMBER WHERE
+		<include refid="cri"/> 
+		ID IS NOT NULL
+	</select>
+	
+	<update id="update">
+  		UPDATE TBL_MEMBER SET
+  		NAME = #{name},
+  		NICKNAME =  #{nickname},
+  		EMAIL = #{email},
+  		PHONENUM = #{phonenum},
+  		GRADE = #{grade}
+  		WHERE ID=#{id} AND STUDNO = #{studno}
+  	</update>
+	<delete id="delete">
+		DELETE (SELECT *
+		        FROM TBL_MEMBER A
+		        INNER JOIN TBL_AUTH B
+		            ON A.ID = B.ID
+        		WHERE A.ID=#{id} AND B.ID=#{id});
+	</delete>
+	<delete id="deleteAuth">
+		DELETE FROM TBL_AUTH WHERE ID = #{id}
+	</delete>
+	<update id="withdrawReplyupdate">
+		UPDATE TBL_REPLY SET
+		WRITER = '탈퇴회원' 
+		WHERE WRITER = #{id}
+	</update>
+	<update id="withdrawBoardupdate">
+		UPDATE TBL_BOARD SET
+		WRITER = '탈퇴회원' 
+		WHERE WRITER = #{id}
+	</update>
+	<select id = "studnovalue" resultType="student">
+		SELECT * FROM TBL_STUDENT WHERE STUDNO = #{studno}
+	</select>
+	<select id="checkGrade" resultType="member">
+		SELECT * FROM TBL_MEMBER WHERE GRADE = #{grade}
+	</select>
+  </mapper>

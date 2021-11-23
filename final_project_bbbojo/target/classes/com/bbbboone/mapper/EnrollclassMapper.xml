@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bbbboone.mapper.EnrollclassMapper">
+	
+	<insert id="insert">
+		INSERT INTO TBL_ENROLLCLASS(COURNO, STUDNO)
+		VALUES(#{courno}, #{studno})
+	</insert>
+	
+	<select id="read" resultType="enrollclass">
+		SELECT * FROM TBL_ENROLLCLASS WHERE COURNO = #{courno} AND STUDNO = #{studno} 
+	</select>
+	
+	<select id="getList" resultType="enrollclass">
+		SELECT * FROM TBL_ENROLLCLASS WHERE COURNO > 0
+	</select>
+	
+	<select id="getListAdmin" resultType="enrollclass">
+		SELECT * FROM TBL_ENROLLCLASS WHERE COURNO = #{courno}
+	</select>
+	
+	<!-- <select id="getList2" resultMap="enrollclassMap">
+		SELECT NAME, PIC, STARTTIME || '시~' || ENDTIME || '시', DAY || '요일' DAY
+		FROM tbl_enrollclass E
+		JOIN tbl_course C
+		USING(COURNO)
+		WHERE STUDNO = #{studno}
+	</select> -->
+	
+	<select id="getCount" resultType="int">
+		SELECT COUNT(*) FROM TBL_ENROLLCLASS WHERE COURNO = #{courno} GROUP BY COURNO
+	</select>
+	
+	<delete id="delete">
+		DELETE FROM TBL_ENROLLCLASS WHERE STUDNO = #{studno} AND COURNO = #{courno}
+	</delete>
+</mapper>

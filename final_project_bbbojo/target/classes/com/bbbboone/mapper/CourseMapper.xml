@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bbbboone.mapper.CourseMapper">
+	<resultMap type="course" id="courseMap">
+		<id property="courno" column="courno"/>
+		<result property="deptno" column="deptno"/>
+		<result property="courno" column="courno"/>
+		<result property="name" column="name"/>
+		<result property="startTime" column="startTime"/>
+		<result property="endTime" column="endTime"/>
+		<result property="cnt" column="cnt"/>
+		<result property="maxCnt" column="maxCnt"/>
+		<result property="pic" column="pic"/>
+		<result property="profno" column="profno"/>
+		<result property="day" column="day"/>
+		<collection property="enrollclasses" resultMap="enrollclassMap"/>
+	</resultMap>
+	<resultMap type="enrollclass" id="enrollclassMap">
+		<result property="courno" column="courno"/>
+		<result property="studno" column="studno"/>
+	</resultMap>
+	<resultMap type="course" id="courseMap2">
+		<id property="courno" column="courno"/>
+		<result property="courno" column="courno"/>
+		<result property="startTime" column="startTime"/>
+		<result property="endTime" column="endTime"/>
+		<result property="day" column="day"/>
+		<collection property="enrollclasses" resultMap="enrollclassMap"/>
+	</resultMap>
+	
+	<sql id="cri">
+		<trim prefix="(" suffix=") AND" prefixOverrides="OR">
+			<foreach collection="typeArr" item="type">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'D'.toString()">
+							TO_CHAR(DEPTNO) LIKE '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'C'.toString()">
+							TO_CHAR(COURNO) LIKE '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'N'.toString()">
+							NAME LIKE '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'P'.toString()">
+							PIC LIKE '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="getTotalCount" resultType="int">
+		SELECT COUNT(*) FROM TBL_COURSE WHERE 
+		<include refid="cri"/> 
+		COURNO > 0
+	</select>
+	
+	<select id="getListWithPaging" resultType="course">
+		SELECT RN, COURNO, NAME, STARTTIME, ENDTIME, CNT, MAXCNT, PIC, PROFNO, DEPTNO, DAY
+		FROM
+		(
+		    SELECT
+			    /*+ INDEX_DESC(TBL_COURSE PK_COURSE)*/
+			    ROWNUM RN, COURNO, NAME, STARTTIME, ENDTIME, CNT, MAXCNT, PIC, PROFNO, DEPTNO, DAY
+		    FROM 
+		    	TBL_COURSE
+		    WHERE
+			<include refid="cri"/>
+		    	ROWNUM &lt;= #{pageNum} * #{amount}
+		)
+		WHERE RN > (#{pageNum}-1) * #{amount}
+	</select>
+	
+	<select id="getList" resultType="course">
+		SELECT * FROM TBL_COURSE WHERE COURNO > 0
+	</select>
+	
+	<select id="getList2" resultMap="courseMap">
+		SELECT COURNO, STUDNO, NAME, STARTTIME, ENDTIME, CNT, MAXCNT, PIC, PROFNO, DEPTNO, DAY
+		FROM tbl_enrollclass E
+		JOIN tbl_course C
+		USING(COURNO)
+		WHERE STUDNO = #{studno}
+	</select>
+	
+	<insert id="insert">
+		<selectKey order="BEFORE" keyProperty="courno" resultType="long">
+			SELECT SEQ_COURSE.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO TBL_COURSE 
+		(COURNO, NAME, STARTTIME, ENDTIME, 
+		MAXCNT, PIC, PROFNO, DEPTNO, DAY)
+		VALUES
+		(#{courno}, #{name}, #{startTime}, #{endTime}, 
+		#{maxCnt}, #{pic}, #{profno}, #{deptno}, #{day})
+	</insert>
+	
+	<select id="read" resultType="course">
+		SELECT * FROM TBL_COURSE WHERE COURNO = #{courno}
+	</select>
+
+	<update id="update">
+		UPDATE TBL_COURSE SET 
+		NAME = #{name},
+		STARTTIME = #{startTime},
+		ENDTIME = #{endTime},
+		MAXCNT = #{maxCnt},
+		PIC = #{pic},
+		PROFNO = #{profno},
+		DEPTNO = #{deptno},
+		DAY = #{day}
+		WHERE COURNO = #{courno}
+	</update>
+	
+	<update id="getCntCount">
+		UPDATE TBL_COURSE SET 
+		CNT = (
+		    SELECT COUNT(*) 
+		    FROM TBL_ENROLLCLASS
+		    WHERE COURNO = #{courno}
+		)
+		WHERE COURNO = #{courno}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM TBL_COURSE WHERE COURNO = #{courno}
+	</delete>
+	
+	<select id="getOverlap" resultMap="courseMap2">
+		SELECT COURNO, STARTTIME, ENDTIME, DAY
+		FROM TBL_ENROLLCLASS E
+		JOIN TBL_COURSE C
+		USING(COURNO)
+		WHERE STUDNO = #{studno}
+		AND DAY = #{day}
+	</select>
+</mapper>

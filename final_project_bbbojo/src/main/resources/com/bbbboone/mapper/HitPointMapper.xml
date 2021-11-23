@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.bbbboone.mapper.HitPointMapper">
+  	<insert id="insert">
+	 INSERT INTO TBL_HITPOINT(HITCOUNT, ID , BNO)
+	VALUES (1, #{id}, #{bno})
+	</insert>
+	
+	<delete id="hitDown">
+	DELETE FROM TBL_HITPOINT
+	WHERE BNO = #{bno} AND ID = #{id}
+	</delete>
+	
+	<select id="countByBno" resultType="String">
+	SELECT COUNT(*)
+	FROM TBL_HITPOINT
+	WHERE BNO = #{bno}
+	GROUP BY BNO
+	</select>
+
+  </mapper>

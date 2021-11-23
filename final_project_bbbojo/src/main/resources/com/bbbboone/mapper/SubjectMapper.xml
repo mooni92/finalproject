@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bbbboone.mapper.SubjectMapper">
+	
+	<select id="getList" resultType="subject">
+		SELECT * FROM TBL_SUBJECT WHERE COURNO = #{courno}
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO TBL_SUBJECT
+		VALUES(#{subno}, #{name}, #{courno})
+	</insert>
+	
+	<select id="read" resultType="subject">
+		SELECT * FROM TBL_SUBJECT WHERE SUBNO = #{subno}
+	</select>
+
+	<update id="update">
+		UPDATE TBL_SUBJECT SET NAME = #{name} WHERE SUBNO = #{subno}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM TBL_SUBJECT WHERE SUBNO = #{subno}
+	</delete>
+</mapper>

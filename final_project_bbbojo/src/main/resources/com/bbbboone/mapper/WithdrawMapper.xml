@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bbbboone.mapper.WithdrawMapper">
+	<sql id="cri">
+		<trim prefix="(" suffix=") AND" prefixOverrides="OR">
+			<foreach collection="typeArr" item="type">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'I'.toString()">
+							ID LIKE '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	
+	<select id="getTotalCount" resultType="int">
+		SELECT COUNT(*) FROM TBL_WITHDRAW WHERE 
+		<include refid="cri"/> 
+		ID IS NOT NULL
+	</select>
+	
+	<select id="getListWithPaging" resultType="withdraw">
+		SELECT RN, ID, WDATE, COMMENTS
+		FROM
+		(
+		    SELECT
+			    /*+ INDEX_DESC(TBL_WITHDRAW PK_WITHDRAW)*/
+			    ROWNUM RN, ID, WDATE, COMMENTS
+		    FROM 
+		    	TBL_WITHDRAW
+		    WHERE
+			<include refid="cri"/>
+		    	ROWNUM &lt;= #{pageNum} * #{amount}
+		)
+		WHERE RN > (#{pageNum}-1) * #{amount}
+	</select>
+	
+	<select id="getList" resultType="withdraw">
+		SELECT * FROM TBL_WITHDRAW WHERE ID IS NOT NULL
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO TBL_WITHDRAW 
+		(ID, WDATE, COMMENTS)
+		VALUES
+		(#{id}, SYSDATE, #{comments})
+	</insert>
+	
+	<select id="read" resultType="withdraw">
+		SELECT * FROM TBL_WITHDRAW WHERE ID = #{id}
+	</select>
+
+	<update id="update">
+		UPDATE TBL_WITHDRAW SET 
+		COMMENTS = #{comments}
+		WHERE ID = #{id}
+	</update>
+	
+	<delete id="delete">
+		DELETE FROM TBL_WITHDRAW WHERE ID = #{id}
+	</delete>
+</mapper>
